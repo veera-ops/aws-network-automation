@@ -1,2 +1,46 @@
-YOUR_GITHUB_ORG
-YOUR_REPO
+AWSTemplateFormatVersion: '2010-09-09'
+
+Resources:
+
+  GitHubTerraformRole:
+
+    Type: AWS::IAM::Role
+
+    Properties:
+
+      RoleName: GitHubTerraformRole
+
+      AssumeRolePolicyDocument:
+
+        Version: "2012-10-17"
+
+        Statement:
+
+          - Effect: Allow
+
+            Principal:
+
+              Federated:
+                Fn::Sub:
+                  - arn:aws:iam::${AccountId}:oidc-provider/token.actions.githubusercontent.com
+                  - AccountId: !Ref AWS::AccountId
+
+            Action:
+              - sts:AssumeRoleWithWebIdentity
+
+            Condition:
+
+              StringEquals:
+                token.actions.githubusercontent.com:aud: sts.amazonaws.com
+
+              StringLike:
+                token.actions.githubusercontent.com:sub:
+                  - repo:YOUR_GITHUB_ORG/YOUR_REPO:*
+
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AdministratorAccess
+
+Outputs:
+
+  RoleArn:
+    Value: !GetAtt GitHubTerraformRole.Arn
